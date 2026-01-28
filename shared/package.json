@@ -1,0 +1,14 @@
+{
+    "name": "@ats-resume/shared",
+    "version": "1.0.0",
+    "description": "Shared TypeScript types for ATS Resume Generator",
+    "main": "types/index.ts",
+    "types": "types/index.ts",
+    "scripts": {},
+    "keywords": [
+        "types",
+        "shared"
+    ],
+    "author": "",
+    "license": "ISC"
+}
