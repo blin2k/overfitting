@@ -25,6 +25,24 @@ export async function saveResumeToServer(data: ResumeData): Promise<boolean> {
   }
 }
 
+export interface ProviderConfig {
+  id: string
+  name: string
+  models: string[]
+  defaultModel: string
+}
+
+export async function fetchConfiguredProviders(): Promise<ProviderConfig[]> {
+  try {
+    const res = await fetch(`${API_BASE}/providers`)
+    if (!res.ok) return []
+    const data = await res.json()
+    return data.providers ?? []
+  } catch {
+    return []
+  }
+}
+
 export interface ApiKeyRecord {
   provider: string
   maskedKey: string

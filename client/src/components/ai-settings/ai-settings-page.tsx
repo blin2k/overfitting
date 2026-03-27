@@ -9,7 +9,9 @@ import {
   fetchApiKeys,
   saveApiKey,
   deleteApiKey,
+  fetchConfiguredProviders,
   type ApiKeyRecord,
+  type ProviderConfig,
 } from '@/lib/api'
 
 export function AISettingsPage() {
@@ -20,13 +22,23 @@ export function AISettingsPage() {
     openai: 'GPT-4o',
   })
   const [apiKeyEntries, setApiKeyEntries] = useState<ApiKeyRecord[]>([])
+  const [configuredProviders, setConfiguredProviders] = useState<ProviderConfig[]>([])
   const [showAddKeyDialog, setShowAddKeyDialog] = useState(false)
 
   const contentRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    fetchApiKeys().then(setApiKeyEntries)
+  const refreshProviderData = useCallback(async () => {
+    const [keys, providers] = await Promise.all([
+      fetchApiKeys(),
+      fetchConfiguredProviders(),
+    ])
+    setApiKeyEntries(keys)
+    setConfiguredProviders(providers)
   }, [])
+
+  useEffect(() => {
+    refreshProviderData()
+  }, [refreshProviderData])
 
   const handleNavChange = useCallback((id: string) => {
     setActiveNav(id)
@@ -45,18 +57,17 @@ export function AISettingsPage() {
   const handleAddKeySave = useCallback(async (providerId: string, apiKey: string) => {
     const result = await saveApiKey(providerId, apiKey)
     if (result?.success) {
-      const keys = await fetchApiKeys()
-      setApiKeyEntries(keys)
+      await refreshProviderData()
     }
     setShowAddKeyDialog(false)
-  }, [])
+  }, [refreshProviderData])
 
   const handleDeleteKey = useCallback(async (provider: string) => {
     const ok = await deleteApiKey(provider)
     if (ok) {
-      setApiKeyEntries((prev) => prev.filter((e) => e.provider !== provider))
+      await refreshProviderData()
     }
-  }, [])
+  }, [refreshProviderData])
 
   return (
     <div className="flex h-screen flex-col">
@@ -76,6 +87,7 @@ export function AISettingsPage() {
               onSelectProvider={setSelectedProvider}
             />
             <ModelsCard
+              configuredProviders={configuredProviders}
               providerModels={providerModels}
               onModelChange={handleModelChange}
               onSave={handleSaveSettings}
