@@ -60,10 +60,13 @@ export function AISettingsPage() {
     setTestStatuses((prev) => ({ ...prev, [provider]: ok ? 'success' : 'error' }))
   }, [])
 
-  const handleAddKeySave = useCallback(async (providerId: string, apiKey: string) => {
+  const handleAddKeySave = useCallback(async (providerId: string, apiKey: string, testPassed: boolean) => {
     const result = await saveApiKey(providerId, apiKey)
     if (result?.success) {
       await refreshProviderData()
+      if (testPassed) {
+        setTestStatuses((prev) => ({ ...prev, [providerId]: 'success' }))
+      }
     }
     setShowAddKeyDialog(false)
   }, [refreshProviderData])
@@ -71,6 +74,11 @@ export function AISettingsPage() {
   const handleDeleteKey = useCallback(async (provider: string) => {
     const ok = await deleteApiKey(provider)
     if (ok) {
+      setTestStatuses((prev) => {
+        const next = { ...prev }
+        delete next[provider]
+        return next
+      })
       await refreshProviderData()
     }
   }, [refreshProviderData])

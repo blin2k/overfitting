@@ -15,7 +15,7 @@ const providers = [
 interface AddApiKeyDialogProps {
   open: boolean
   onClose: () => void
-  onSave: (providerId: string, apiKey: string) => Promise<void>
+  onSave: (providerId: string, apiKey: string, testPassed: boolean) => Promise<void>
 }
 
 export function AddApiKeyDialog({ open, onClose, onSave }: AddApiKeyDialogProps) {
@@ -33,13 +33,13 @@ export function AddApiKeyDialog({ open, onClose, onSave }: AddApiKeyDialogProps)
   const handleSave = useCallback(async () => {
     if (apiKey.trim() && !saving) {
       setSaving(true)
-      await onSave(selectedProvider, apiKey.trim())
+      await onSave(selectedProvider, apiKey.trim(), testStatus === 'success')
       setSelectedProvider(providers[0].id)
       setApiKey('')
       setTestStatus('idle')
       setSaving(false)
     }
-  }, [selectedProvider, apiKey, onSave, saving])
+  }, [selectedProvider, apiKey, onSave, saving, testStatus])
 
   const handleClose = useCallback(() => {
     setSelectedProvider(providers[0].id)
