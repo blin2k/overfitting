@@ -63,7 +63,12 @@ export function ConnectivityCard({
       subtitle="Show connection status"
     >
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {providerDefs.map((provider) => {
+        {[...providerDefs]
+          .sort((a, b) => {
+            const order: Record<ConnectionStatus, number> = { connected: 0, 'not-tested': 1, 'not-configured': 2 }
+            return order[getConnectionStatus(a.id, savedProviders, testStatuses)] - order[getConnectionStatus(b.id, savedProviders, testStatuses)]
+          })
+          .map((provider) => {
           const status = getConnectionStatus(provider.id, savedProviders, testStatuses)
           const { label, className: badgeClass } = statusConfig[status]
 
