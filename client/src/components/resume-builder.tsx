@@ -40,7 +40,7 @@ export function ResumeBuilder() {
 
   return (
     <div className="flex h-screen flex-col">
-      <TopBar onSave={handleSave} onExport={handleExport} />
+      <TopBar currentPage="builder" onSave={handleSave} onExport={handleExport} />
       {isEditing ? (
         <PanelGroup
           key="three-panel"
