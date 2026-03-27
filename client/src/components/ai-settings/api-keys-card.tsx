@@ -1,27 +1,19 @@
-import { useState } from 'react'
 import { Plus, Trash2, Wifi, WifiOff } from 'lucide-react'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { SettingsCard } from './settings-card'
-import { testApiKey, type ApiKeyRecord } from '@/lib/api'
-
-type TestStatus = 'idle' | 'testing' | 'success' | 'error'
+import type { ApiKeyRecord } from '@/lib/api'
+import type { TestStatus } from './ai-settings-page'
 
 interface ApiKeysCardProps {
   entries: ApiKeyRecord[]
   onAddKey: () => void
   onDeleteKey: (provider: string) => void
+  testStatuses: Record<string, TestStatus>
+  onTestKey: (provider: string) => void
 }
 
-export function ApiKeysCard({ entries, onAddKey, onDeleteKey }: ApiKeysCardProps) {
-  const [testStatuses, setTestStatuses] = useState<Record<string, TestStatus>>({})
-
-  const handleTest = async (provider: string) => {
-    setTestStatuses((prev) => ({ ...prev, [provider]: 'testing' }))
-    const ok = await testApiKey(provider)
-    setTestStatuses((prev) => ({ ...prev, [provider]: ok ? 'success' : 'error' }))
-  }
-
+export function ApiKeysCard({ entries, onAddKey, onDeleteKey, testStatuses, onTestKey }: ApiKeysCardProps) {
   return (
     <SettingsCard
       id="api-keys"
@@ -54,7 +46,7 @@ export function ApiKeysCard({ entries, onAddKey, onDeleteKey }: ApiKeysCardProps
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleTest(entry.provider)}
+                    onClick={() => onTestKey(entry.provider)}
                     disabled={status === 'testing'}
                   >
                     {status === 'testing' ? 'Testing...' : 'Test'}

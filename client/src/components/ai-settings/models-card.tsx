@@ -1,5 +1,3 @@
-import { Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
 import { SettingsCard } from './settings-card'
 import type { ProviderConfig } from '@/lib/api'
 
@@ -7,10 +5,9 @@ interface ModelsCardProps {
   configuredProviders: ProviderConfig[]
   providerModels: Record<string, string>
   onModelChange: (providerId: string, model: string) => void
-  onSave: () => void
 }
 
-export function ModelsCard({ configuredProviders, providerModels, onModelChange, onSave }: ModelsCardProps) {
+export function ModelsCard({ configuredProviders, providerModels, onModelChange }: ModelsCardProps) {
   return (
     <SettingsCard
       id="models"

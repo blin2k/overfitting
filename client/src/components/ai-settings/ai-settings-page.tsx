@@ -10,9 +10,12 @@ import {
   saveApiKey,
   deleteApiKey,
   fetchConfiguredProviders,
+  testApiKey,
   type ApiKeyRecord,
   type ProviderConfig,
 } from '@/lib/api'
+
+export type TestStatus = 'idle' | 'testing' | 'success' | 'error'
 
 export function AISettingsPage() {
   const [activeNav, setActiveNav] = useState('connectivity')
@@ -24,6 +27,7 @@ export function AISettingsPage() {
   const [apiKeyEntries, setApiKeyEntries] = useState<ApiKeyRecord[]>([])
   const [configuredProviders, setConfiguredProviders] = useState<ProviderConfig[]>([])
   const [showAddKeyDialog, setShowAddKeyDialog] = useState(false)
+  const [testStatuses, setTestStatuses] = useState<Record<string, TestStatus>>({})
 
   const contentRef = useRef<HTMLDivElement>(null)
 
@@ -50,8 +54,10 @@ export function AISettingsPage() {
     setProviderModels((prev) => ({ ...prev, [providerId]: model }))
   }, [])
 
-  const handleSaveSettings = useCallback(() => {
-    // placeholder for future backend integration
+  const handleTestKey = useCallback(async (provider: string) => {
+    setTestStatuses((prev) => ({ ...prev, [provider]: 'testing' }))
+    const ok = await testApiKey(provider)
+    setTestStatuses((prev) => ({ ...prev, [provider]: ok ? 'success' : 'error' }))
   }, [])
 
   const handleAddKeySave = useCallback(async (providerId: string, apiKey: string) => {
@@ -85,17 +91,20 @@ export function AISettingsPage() {
             <ConnectivityCard
               selectedProvider={selectedProvider}
               onSelectProvider={setSelectedProvider}
+              savedProviders={apiKeyEntries.map((e) => e.provider)}
+              testStatuses={testStatuses}
             />
             <ModelsCard
               configuredProviders={configuredProviders}
               providerModels={providerModels}
               onModelChange={handleModelChange}
-              onSave={handleSaveSettings}
             />
             <ApiKeysCard
               entries={apiKeyEntries}
               onAddKey={() => setShowAddKeyDialog(true)}
               onDeleteKey={handleDeleteKey}
+              testStatuses={testStatuses}
+              onTestKey={handleTestKey}
             />
           </div>
         </div>
