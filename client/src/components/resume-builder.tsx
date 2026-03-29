@@ -5,6 +5,7 @@ import { TopBar } from '@/components/top-bar'
 import { SectionSidebar } from '@/components/section-sidebar'
 import { EditPanel } from '@/components/edit-panel'
 import { ResumePreview } from '@/components/preview/resume-preview'
+import { AIAssistantPanel } from '@/components/ai-assistant-panel'
 import { useResume } from '@/context/resume-context'
 import { saveResumeToServer } from '@/lib/api'
 import { exportPdf } from '@/lib/pdf-export'
@@ -21,8 +22,8 @@ export function ResumeBuilder() {
   const { state } = useResume()
   const [activeSection, setActiveSection] = useState<string | null>(null)
 
+  const fourPanelProps = useDefaultLayout({ id: 'resume-four-panel' })
   const threePanelProps = useDefaultLayout({ id: 'resume-three-panel' })
-  const twoPanelProps = useDefaultLayout({ id: 'resume-two-panel' })
 
   const handleSave = useCallback(() => {
     saveResumeToServer(state)
@@ -40,8 +41,37 @@ export function ResumeBuilder() {
 
   return (
     <div className="flex h-screen flex-col">
-      <TopBar onSave={handleSave} onExport={handleExport} />
+      <TopBar currentPage="builder" onSave={handleSave} onExport={handleExport} />
       {isEditing ? (
+        <PanelGroup
+          key="four-panel"
+          {...fourPanelProps}
+          orientation="horizontal"
+          className="flex-1"
+        >
+          <Panel id="sidebar" defaultSize="15%" minSize="12%" maxSize="25%">
+            <SectionSidebar
+              activeSection={activeSection}
+              onSelectSection={setActiveSection}
+            />
+          </Panel>
+          <ResizeHandle />
+          <Panel id="editor" defaultSize="23%" minSize="18%" maxSize="35%">
+            <EditPanel
+              activeSectionId={activeSection}
+              onClose={handleCloseEditor}
+            />
+          </Panel>
+          <ResizeHandle />
+          <Panel id="preview" defaultSize="42%" minSize="20%">
+            <ResumePreview />
+          </Panel>
+          <ResizeHandle />
+          <Panel id="ai-panel" defaultSize="20%" minSize="15%" maxSize="30%">
+            <AIAssistantPanel />
+          </Panel>
+        </PanelGroup>
+      ) : (
         <PanelGroup
           key="three-panel"
           {...threePanelProps}
@@ -55,33 +85,12 @@ export function ResumeBuilder() {
             />
           </Panel>
           <ResizeHandle />
-          <Panel id="editor" defaultSize="28%" minSize="20%" maxSize="45%">
-            <EditPanel
-              activeSectionId={activeSection}
-              onClose={handleCloseEditor}
-            />
-          </Panel>
-          <ResizeHandle />
-          <Panel id="preview" defaultSize="52%" minSize="25%">
+          <Panel id="preview" defaultSize="60%" minSize="25%">
             <ResumePreview />
           </Panel>
-        </PanelGroup>
-      ) : (
-        <PanelGroup
-          key="two-panel"
-          {...twoPanelProps}
-          orientation="horizontal"
-          className="flex-1"
-        >
-          <Panel id="sidebar" defaultSize="25%" minSize="15%" maxSize="40%">
-            <SectionSidebar
-              activeSection={activeSection}
-              onSelectSection={setActiveSection}
-            />
-          </Panel>
           <ResizeHandle />
-          <Panel id="preview" defaultSize="75%" minSize="30%">
-            <ResumePreview />
+          <Panel id="ai-panel" defaultSize="20%" minSize="15%" maxSize="30%">
+            <AIAssistantPanel />
           </Panel>
         </PanelGroup>
       )}
