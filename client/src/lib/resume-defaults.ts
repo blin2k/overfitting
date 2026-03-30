@@ -3,13 +3,13 @@ import type { ResumeData } from '@/types/resume'
 export const DEFAULT_RESUME: ResumeData = {
   id: crypto.randomUUID(),
   personalInfo: {
-    fullName: 'Alexander Mitchell',
+    fullName: 'Ling Long',
     jobTitle: 'Senior Software Engineer',
-    email: 'alex.mitchell@email.com',
+    email: 'linglong@fixallbugs.com',
     phone: '+1 (555) 234-5678',
     location: 'San Francisco, CA',
-    linkedinUrl: 'linkedin.com/in/amitchell',
-    portfolioWebsite: 'alexmitchell.dev',
+    linkedinUrl: 'linkedin.com/in/linglong',
+    portfolioWebsite: 'linglong.dev',
   },
   sections: [
     {
