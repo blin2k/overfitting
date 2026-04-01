@@ -21,6 +21,7 @@ function ResizeHandle() {
 export function ResumeBuilder() {
   const { state } = useResume()
   const [activeSection, setActiveSection] = useState<string | null>(null)
+  const [highlightKeywords, setHighlightKeywords] = useState<string[]>([])
 
   const handleSave = useCallback(() => {
     saveResumeToServer(state)
@@ -62,11 +63,11 @@ export function ResumeBuilder() {
           </>
         )}
         <Panel id="preview" defaultSize={isEditing ? "42%" : "60%"} minSize="20%">
-          <ResumePreview />
+          <ResumePreview highlightKeywords={highlightKeywords} />
         </Panel>
         <ResizeHandle />
         <Panel id="ai-panel" defaultSize="20%" minSize="15%" maxSize="30%">
-          <AIAssistantPanel />
+          <AIAssistantPanel onHighlight={setHighlightKeywords} />
         </Panel>
       </PanelGroup>
     </div>
