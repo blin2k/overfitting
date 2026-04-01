@@ -1,27 +1,7 @@
 import { Router } from 'express'
+import { apiKeys, providerCatalog, maskKey, aiSettings, updateAISettings } from '../provider-store.js'
 
 const router = Router()
-
-interface StoredKey {
-  provider: string
-  maskedKey: string
-  key: string
-}
-
-// In-memory storage for MVP
-const apiKeys = new Map<string, StoredKey>()
-
-const providerCatalog: Record<string, { name: string; models: string[]; defaultModel: string }> = {
-  anthropic: { name: 'Anthropic', models: ['Claude Opus 4', 'Claude Sonnet 4', 'Claude Haiku 3.5'], defaultModel: 'Claude Opus 4' },
-  openai: { name: 'OpenAI', models: ['GPT-4o', 'GPT-4-turbo', 'GPT-3.5-turbo'], defaultModel: 'GPT-4o' },
-  gemini: { name: 'Gemini', models: ['Gemini 2.5 Pro', 'Gemini 2.5 Flash', 'Gemini 2.0 Flash'], defaultModel: 'Gemini 2.5 Pro' },
-  kimi: { name: 'Kimi', models: ['Moonshot-v1-8k', 'Moonshot-v1-32k', 'Moonshot-v1-128k'], defaultModel: 'Moonshot-v1-8k' },
-}
-
-function maskKey(key: string): string {
-  if (key.length <= 8) return '•'.repeat(key.length)
-  return key.slice(0, 6) + '•'.repeat(Math.min(key.length - 10, 16)) + key.slice(-4)
-}
 
 router.get('/providers', (_req, res) => {
   const providers = Array.from(apiKeys.keys())
@@ -115,6 +95,16 @@ router.delete('/api-keys/:provider', (req, res) => {
   const { provider } = req.params
   apiKeys.delete(provider)
   res.json({ success: true })
+})
+
+router.get('/ai-settings', (_req, res) => {
+  res.json(aiSettings)
+})
+
+router.post('/ai-settings', (req, res) => {
+  const { provider, model } = req.body as { provider?: string; model?: string }
+  updateAISettings({ provider, model })
+  res.json(aiSettings)
 })
 
 export default router
