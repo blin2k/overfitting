@@ -63,13 +63,14 @@ export async function fetchApiKeys(): Promise<ApiKeyRecord[]> {
 
 export async function saveApiKey(
   provider: string,
-  apiKey: string
+  apiKey: string,
+  tested?: boolean
 ): Promise<{ success: boolean; maskedKey: string } | null> {
   try {
     const res = await fetch(`${API_BASE}/api-keys`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider, apiKey }),
+      body: JSON.stringify({ provider, apiKey, tested }),
     })
     if (!res.ok) return null
     return await res.json()

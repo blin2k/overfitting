@@ -23,7 +23,7 @@ router.get('/api-keys', (_req, res) => {
 })
 
 router.post('/api-keys', (req, res) => {
-  const { provider, apiKey } = req.body as { provider: string; apiKey: string }
+  const { provider, apiKey, tested } = req.body as { provider: string; apiKey: string; tested?: boolean }
 
   if (!provider || !apiKey) {
     res.status(400).json({ error: 'provider and apiKey are required' })
@@ -31,7 +31,7 @@ router.post('/api-keys', (req, res) => {
   }
 
   const maskedKey = maskKey(apiKey)
-  apiKeys.set(provider, { provider, maskedKey, key: apiKey, tested: false })
+  apiKeys.set(provider, { provider, maskedKey, key: apiKey, tested: tested ?? false })
   res.json({ success: true, maskedKey })
 })
 

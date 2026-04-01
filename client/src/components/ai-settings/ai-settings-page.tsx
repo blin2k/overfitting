@@ -85,12 +85,9 @@ export function AISettingsPage() {
   }, [])
 
   const handleAddKeySave = useCallback(async (providerId: string, apiKey: string, testPassed: boolean) => {
-    const result = await saveApiKey(providerId, apiKey)
+    const result = await saveApiKey(providerId, apiKey, testPassed)
     if (result?.success) {
       await refreshProviderData()
-      if (testPassed) {
-        setTestStatuses((prev) => ({ ...prev, [providerId]: 'success' }))
-      }
     }
     setShowAddKeyDialog(false)
   }, [refreshProviderData])
