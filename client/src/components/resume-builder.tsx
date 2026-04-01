@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { Panel, Group as PanelGroup, Separator as PanelResizeHandle, useDefaultLayout } from 'react-resizable-panels'
+import { Panel, Group as PanelGroup, Separator as PanelResizeHandle } from 'react-resizable-panels'
 import { GripVertical } from 'lucide-react'
 import { TopBar } from '@/components/top-bar'
 import { SectionSidebar } from '@/components/section-sidebar'
@@ -22,9 +22,6 @@ export function ResumeBuilder() {
   const { state } = useResume()
   const [activeSection, setActiveSection] = useState<string | null>(null)
 
-  const fourPanelProps = useDefaultLayout({ id: 'resume-four-panel' })
-  const threePanelProps = useDefaultLayout({ id: 'resume-three-panel' })
-
   const handleSave = useCallback(() => {
     saveResumeToServer(state)
   }, [state])
@@ -42,58 +39,36 @@ export function ResumeBuilder() {
   return (
     <div className="flex h-screen flex-col">
       <TopBar currentPage="builder" onSave={handleSave} onExport={handleExport} />
-      {isEditing ? (
-        <PanelGroup
-          key="four-panel"
-          {...fourPanelProps}
-          orientation="horizontal"
-          className="flex-1"
-        >
-          <Panel id="sidebar" defaultSize="15%" minSize="12%" maxSize="25%">
-            <SectionSidebar
-              activeSection={activeSection}
-              onSelectSection={setActiveSection}
-            />
-          </Panel>
-          <ResizeHandle />
-          <Panel id="editor" defaultSize="23%" minSize="18%" maxSize="35%">
-            <EditPanel
-              activeSectionId={activeSection}
-              onClose={handleCloseEditor}
-            />
-          </Panel>
-          <ResizeHandle />
-          <Panel id="preview" defaultSize="42%" minSize="20%">
-            <ResumePreview />
-          </Panel>
-          <ResizeHandle />
-          <Panel id="ai-panel" defaultSize="20%" minSize="15%" maxSize="30%">
-            <AIAssistantPanel />
-          </Panel>
-        </PanelGroup>
-      ) : (
-        <PanelGroup
-          key="three-panel"
-          {...threePanelProps}
-          orientation="horizontal"
-          className="flex-1"
-        >
-          <Panel id="sidebar" defaultSize="20%" minSize="15%" maxSize="35%">
-            <SectionSidebar
-              activeSection={activeSection}
-              onSelectSection={setActiveSection}
-            />
-          </Panel>
-          <ResizeHandle />
-          <Panel id="preview" defaultSize="60%" minSize="25%">
-            <ResumePreview />
-          </Panel>
-          <ResizeHandle />
-          <Panel id="ai-panel" defaultSize="20%" minSize="15%" maxSize="30%">
-            <AIAssistantPanel />
-          </Panel>
-        </PanelGroup>
-      )}
+      <PanelGroup
+        orientation="horizontal"
+        className="flex-1"
+      >
+        <Panel id="sidebar" defaultSize="15%" minSize="12%" maxSize="25%">
+          <SectionSidebar
+            activeSection={activeSection}
+            onSelectSection={setActiveSection}
+          />
+        </Panel>
+        <ResizeHandle />
+        {isEditing && (
+          <>
+            <Panel id="editor" defaultSize="23%" minSize="18%" maxSize="35%">
+              <EditPanel
+                activeSectionId={activeSection}
+                onClose={handleCloseEditor}
+              />
+            </Panel>
+            <ResizeHandle />
+          </>
+        )}
+        <Panel id="preview" defaultSize={isEditing ? "42%" : "60%"} minSize="20%">
+          <ResumePreview />
+        </Panel>
+        <ResizeHandle />
+        <Panel id="ai-panel" defaultSize="20%" minSize="15%" maxSize="30%">
+          <AIAssistantPanel />
+        </Panel>
+      </PanelGroup>
     </div>
   )
 }
