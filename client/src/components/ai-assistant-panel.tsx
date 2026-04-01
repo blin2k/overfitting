@@ -73,7 +73,7 @@ export function AIAssistantPanel() {
     fetchAISettings().then(setAiSettings)
   }, [])
 
-  const handleOptimize = useCallback(async () => {
+  const runAnalysis = useCallback(async () => {
     if (!aiSettings) return
     setIsLoading(true)
     setError(null)
@@ -122,10 +122,18 @@ export function AIAssistantPanel() {
             {ACTION_CONFIG.map((action) => (
               <button
                 key={action.type}
-                className="flex h-20 flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card"
+                disabled={action.type === 'rating' && isLoading}
+                onClick={action.type === 'rating' ? runAnalysis : undefined}
+                className="flex h-20 flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card disabled:opacity-50"
               >
-                <action.icon className={`h-5 w-5 ${action.color}`} />
-                <span className="text-xs font-medium text-foreground">{action.label}</span>
+                {action.type === 'rating' && isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin text-[#EAB308]" />
+                ) : (
+                  <action.icon className={`h-5 w-5 ${action.color}`} />
+                )}
+                <span className="text-xs font-medium text-foreground">
+                  {action.type === 'rating' && isLoading ? 'Re-rating...' : action.label}
+                </span>
               </button>
             ))}
           </div>
@@ -150,7 +158,7 @@ export function AIAssistantPanel() {
               className="min-h-[200px] resize-none"
             />
           </div>
-          <Button onClick={handleOptimize} disabled={!jobDescription.trim() || isLoading}>
+          <Button onClick={runAnalysis} disabled={!jobDescription.trim() || isLoading}>
             {isLoading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
