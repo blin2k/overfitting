@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useResume } from '@/context/resume-context'
-import { analyzeResume, fetchAISettings, type AISettings } from '@/lib/api'
+import { analyzeResume, highlightResume, fetchAISettings, type AISettings } from '@/lib/api'
 import type { AnalyzeResponse } from '@/types/analyze'
 
 const ACTION_CONFIG = [
@@ -61,13 +61,18 @@ function ScoreRing({ score }: { score: number }) {
   )
 }
 
-export function AIAssistantPanel() {
+interface AIAssistantPanelProps {
+  onHighlight: (keywords: string[]) => void
+}
+
+export function AIAssistantPanel({ onHighlight }: AIAssistantPanelProps) {
   const { state } = useResume()
   const [jobDescription, setJobDescription] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [results, setResults] = useState<AnalyzeResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [aiSettings, setAiSettings] = useState<AISettings | null>(null)
+  const [isHighlighting, setIsHighlighting] = useState(false)
 
   useEffect(() => {
     fetchAISettings().then(setAiSettings)
@@ -90,6 +95,21 @@ export function AIAssistantPanel() {
     }
     setIsLoading(false)
   }, [state, jobDescription, aiSettings])
+
+  const runHighlight = useCallback(async () => {
+    if (!aiSettings) return
+    setIsHighlighting(true)
+    const response = await highlightResume({
+      resume: state,
+      jobDescription,
+      provider: aiSettings.provider,
+      model: aiSettings.model,
+    })
+    if (response) {
+      onHighlight(response.keywords)
+    }
+    setIsHighlighting(false)
+  }, [state, jobDescription, aiSettings, onHighlight])
 
   return (
     <div className="flex h-full flex-col border-l border-border bg-card">
@@ -119,30 +139,43 @@ export function AIAssistantPanel() {
 
           <span className="text-[13px] font-semibold text-foreground">AI Actions</span>
           <div className="grid grid-cols-2 gap-2">
-            {ACTION_CONFIG.map((action) => (
-              <button
-                key={action.type}
-                disabled={action.type === 'rating' && isLoading}
-                onClick={action.type === 'rating' ? runAnalysis : undefined}
-                className="flex h-20 flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card disabled:opacity-50"
-              >
-                {action.type === 'rating' && isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-[#EAB308]" />
-                ) : (
-                  <action.icon className={`h-5 w-5 ${action.color}`} />
-                )}
-                <span className="text-xs font-medium text-foreground">
-                  {action.type === 'rating' && isLoading ? 'Re-rating...' : action.label}
-                </span>
-              </button>
-            ))}
+            {ACTION_CONFIG.map((action) => {
+              const isBusy =
+                (action.type === 'rating' && isLoading) ||
+                (action.type === 'highlighting' && isHighlighting)
+              const handler =
+                action.type === 'rating' ? runAnalysis
+                : action.type === 'highlighting' ? runHighlight
+                : undefined
+              const busyLabel =
+                action.type === 'rating' ? 'Re-rating...'
+                : action.type === 'highlighting' ? 'Highlighting...'
+                : action.label
+              return (
+                <button
+                  key={action.type}
+                  disabled={isBusy}
+                  onClick={handler}
+                  className="flex h-20 flex-col items-center justify-center gap-2 rounded-lg border border-border bg-card disabled:opacity-50"
+                >
+                  {isBusy ? (
+                    <Loader2 className={`h-5 w-5 animate-spin ${action.color}`} />
+                  ) : (
+                    <action.icon className={`h-5 w-5 ${action.color}`} />
+                  )}
+                  <span className="text-xs font-medium text-foreground">
+                    {isBusy ? busyLabel : action.label}
+                  </span>
+                </button>
+              )
+            })}
           </div>
 
           <Button
             variant="outline"
             size="sm"
             className="mt-2"
-            onClick={() => { setResults(null); setError(null) }}
+            onClick={() => { setResults(null); setError(null); onHighlight([]) }}
           >
             New Analysis
           </Button>

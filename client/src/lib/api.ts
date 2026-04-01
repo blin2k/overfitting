@@ -1,5 +1,5 @@
 import type { ResumeData } from '@/types/resume'
-import type { AnalyzeRequest, AnalyzeResponse } from '@/types/analyze'
+import type { AnalyzeRequest, AnalyzeResponse, HighlightRequest, HighlightResponse } from '@/types/analyze'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
@@ -104,6 +104,22 @@ export async function analyzeResume(
 ): Promise<AnalyzeResponse | null> {
   try {
     const res = await fetch(`${API_BASE}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    })
+    if (!res.ok) return null
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
+export async function highlightResume(
+  request: HighlightRequest
+): Promise<HighlightResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/highlight`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(request),

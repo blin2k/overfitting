@@ -3,4 +3,6 @@ export type {
   AnalyzeResponse,
   AnalyzeAction,
   MatchLevel,
+  HighlightRequest,
+  HighlightResponse,
 } from '@shared/types/analyze'
