@@ -1,4 +1,5 @@
 import type { ResumeData } from '@/types/resume'
+import type { AnalyzeRequest, AnalyzeResponse } from '@/types/analyze'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
@@ -93,6 +94,51 @@ export async function testApiKey(
     return data.success === true
   } catch {
     return false
+  }
+}
+
+export async function analyzeResume(
+  request: AnalyzeRequest
+): Promise<AnalyzeResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/analyze`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    })
+    if (!res.ok) return null
+    return await res.json()
+  } catch {
+    return null
+  }
+}
+
+export interface AISettings {
+  provider: string
+  model: string
+}
+
+export async function fetchAISettings(): Promise<AISettings> {
+  try {
+    const res = await fetch(`${API_BASE}/ai-settings`)
+    if (!res.ok) return { provider: 'anthropic', model: 'Claude Opus 4' }
+    return await res.json()
+  } catch {
+    return { provider: 'anthropic', model: 'Claude Opus 4' }
+  }
+}
+
+export async function saveAISettings(settings: Partial<AISettings>): Promise<AISettings> {
+  try {
+    const res = await fetch(`${API_BASE}/ai-settings`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    })
+    if (!res.ok) return { provider: 'anthropic', model: 'Claude Opus 4' }
+    return await res.json()
+  } catch {
+    return { provider: 'anthropic', model: 'Claude Opus 4' }
   }
 }
 
