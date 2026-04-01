@@ -43,6 +43,15 @@ export function AISettingsPage() {
     setConfiguredProviders(providers)
     setSelectedProvider(settings.provider)
     setProviderModels((prev) => ({ ...prev, [settings.provider]: settings.model }))
+    setTestStatuses((prev) => {
+      const next = { ...prev }
+      for (const key of keys) {
+        if (key.tested && !next[key.provider]) {
+          next[key.provider] = 'success'
+        }
+      }
+      return next
+    })
   }, [])
 
   useEffect(() => {

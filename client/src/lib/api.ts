@@ -47,6 +47,7 @@ export async function fetchConfiguredProviders(): Promise<ProviderConfig[]> {
 export interface ApiKeyRecord {
   provider: string
   maskedKey: string
+  tested: boolean
 }
 
 export async function fetchApiKeys(): Promise<ApiKeyRecord[]> {

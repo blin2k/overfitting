@@ -2,6 +2,7 @@ export interface StoredKey {
   provider: string
   maskedKey: string
   key: string
+  tested: boolean
 }
 
 export const apiKeys = new Map<string, StoredKey>()

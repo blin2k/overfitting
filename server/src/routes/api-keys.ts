@@ -14,9 +14,10 @@ router.get('/providers', (_req, res) => {
 })
 
 router.get('/api-keys', (_req, res) => {
-  const keys = Array.from(apiKeys.values()).map(({ provider, maskedKey }) => ({
+  const keys = Array.from(apiKeys.values()).map(({ provider, maskedKey, tested }) => ({
     provider,
     maskedKey,
+    tested,
   }))
   res.json({ keys })
 })
@@ -30,7 +31,7 @@ router.post('/api-keys', (req, res) => {
   }
 
   const maskedKey = maskKey(apiKey)
-  apiKeys.set(provider, { provider, maskedKey, key: apiKey })
+  apiKeys.set(provider, { provider, maskedKey, key: apiKey, tested: false })
   res.json({ success: true, maskedKey })
 })
 
@@ -83,6 +84,11 @@ router.post('/api-keys/test', async (req, res) => {
         headers: { Authorization: `Bearer ${keyToTest}` },
       })
       ok = r.ok
+    }
+
+    const stored = apiKeys.get(provider)
+    if (stored) {
+      stored.tested = ok
     }
 
     res.json({ success: ok })
