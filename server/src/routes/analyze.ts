@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import type { AnalyzeRequest, AnalyzeResponse, MatchLevel } from '@shared/types/analyze'
+import type { AnalyzeRequest, AnalyzeResponse, MatchLevel, HighlightRequest } from '@shared/types/analyze'
 import { apiKeys, modelIdMap } from '../provider-store.js'
 
 const router = Router()
@@ -149,6 +149,75 @@ router.post('/analyze', async (req, res) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     res.status(500).json({ error: `AI analysis failed: ${message}` })
+  }
+})
+
+function buildHighlightPrompt(resumeJson: string, jobDescription: string): string {
+  return `You are a resume analyst. Identify keywords and short phrases from the job description that also appear in the resume.
+
+Return ONLY a valid JSON object with this exact structure (no markdown, no extra text):
+{
+  "keywords": ["keyword1", "keyword2", ...]
+}
+
+Rules:
+- Only include words/phrases that appear in BOTH the resume and the job description
+- Include technical skills, tools, methodologies, and domain terms
+- Include short phrases (2-3 words) when they appear as a unit (e.g. "machine learning", "project management")
+- Do NOT include generic words like "the", "and", "experience", "team", "work", "role"
+- Return between 5 and 30 keywords, prioritizing the most relevant ones
+- Each keyword must be the exact text as it appears in the resume (preserve original casing)
+
+RESUME:
+${resumeJson}
+
+JOB DESCRIPTION:
+${jobDescription}`
+}
+
+router.post('/highlight', async (req, res) => {
+  const { resume, jobDescription, provider, model } = req.body as HighlightRequest
+
+  if (!resume || !jobDescription || !provider || !model) {
+    res.status(400).json({ error: 'resume, jobDescription, provider, and model are required' })
+    return
+  }
+
+  const stored = apiKeys.get(provider)
+  if (!stored) {
+    res.status(400).json({ error: `No API key configured for provider: ${provider}` })
+    return
+  }
+
+  const modelId = modelIdMap[model] ?? model
+  const prompt = buildHighlightPrompt(JSON.stringify(resume, null, 2), jobDescription)
+
+  try {
+    let responseText: string
+
+    if (provider === 'anthropic') {
+      responseText = await callAnthropic(stored.key, modelId, prompt)
+    } else if (provider === 'openai') {
+      responseText = await callOpenAI(stored.key, modelId, prompt)
+    } else if (provider === 'gemini') {
+      responseText = await callGemini(stored.key, modelId, prompt)
+    } else if (provider === 'kimi') {
+      responseText = await callOpenAI(stored.key, modelId, prompt, 'https://api.moonshot.cn')
+    } else {
+      res.status(400).json({ error: `Unsupported provider: ${provider}` })
+      return
+    }
+
+    const cleaned = responseText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+    const parsed = JSON.parse(cleaned)
+    const keywords: string[] = Array.isArray(parsed.keywords)
+      ? parsed.keywords.filter((k: unknown) => typeof k === 'string' && k.length > 0)
+      : []
+
+    res.json({ keywords })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    res.status(500).json({ error: `Highlight extraction failed: ${message}` })
   }
 })
 
