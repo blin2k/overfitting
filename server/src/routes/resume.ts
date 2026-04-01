@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import type { ResumeData } from '../../shared/types/resume.js'
+import type { ResumeData } from '@shared/types/resume'
 
 const router = Router()
 

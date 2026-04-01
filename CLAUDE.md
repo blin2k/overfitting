@@ -57,8 +57,8 @@ API functions in `client/src/lib/api.ts`. Vite proxies `/api/*` to `http://local
 
 ### Path Aliases
 
-- `@/*` → `client/src/*`
-- `@shared/*` → `shared/*`
+- `@/*` → `client/src/*` (client only)
+- `@shared/*` → `shared/*` (client uses this alias; server uses relative paths ending in `.js`, e.g., `../../shared/types/resume.js`)
 
 ### Styling
 
@@ -71,3 +71,14 @@ Tailwind CSS 4 with OKLCH-based CSS variables in `client/src/index.css` (light/d
 - **PDF export**: `@react-pdf/renderer` in `client/src/components/preview/`
 - **Editor pattern**: Each section editor uses local `useState`, dispatches to context on save
 - **API key testing**: Server makes real HTTP requests to provider APIs (Anthropic, OpenAI, Gemini, Kimi) in `server/src/routes/api-keys.ts`
+- **Data lifecycle**: Server fetches resume on mount → local reducer state → 500ms debounced auto-save back to server
+
+### Environment Variables
+
+- `PORT` — Server port (default: `3001`)
+- `CORS_ORIGIN` — Allowed CORS origin (default: `*`)
+- `VITE_API_URL` — Client API base URL (default: `/api`, proxied in dev)
+
+### Deployment
+
+Client deploys to Vercel with SPA rewrite (`client/vercel.json`). Server requires separate hosting (not included in Vercel config).

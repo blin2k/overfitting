@@ -11,6 +11,8 @@ import {
   deleteApiKey,
   fetchConfiguredProviders,
   testApiKey,
+  fetchAISettings,
+  saveAISettings,
   type ApiKeyRecord,
   type ProviderConfig,
 } from '@/lib/api'
@@ -32,12 +34,24 @@ export function AISettingsPage() {
   const contentRef = useRef<HTMLDivElement>(null)
 
   const refreshProviderData = useCallback(async () => {
-    const [keys, providers] = await Promise.all([
+    const [keys, providers, settings] = await Promise.all([
       fetchApiKeys(),
       fetchConfiguredProviders(),
+      fetchAISettings(),
     ])
     setApiKeyEntries(keys)
     setConfiguredProviders(providers)
+    setSelectedProvider(settings.provider)
+    setProviderModels((prev) => ({ ...prev, [settings.provider]: settings.model }))
+    setTestStatuses((prev) => {
+      const next = { ...prev }
+      for (const key of keys) {
+        if (key.tested && !next[key.provider]) {
+          next[key.provider] = 'success'
+        }
+      }
+      return next
+    })
   }, [])
 
   useEffect(() => {
@@ -50,9 +64,19 @@ export function AISettingsPage() {
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [])
 
+  const handleSelectProvider = useCallback((id: string) => {
+    setSelectedProvider(id)
+    const model = providerModels[id]
+      ?? configuredProviders.find((p) => p.id === id)?.defaultModel
+    saveAISettings({ provider: id, model })
+  }, [providerModels, configuredProviders])
+
   const handleModelChange = useCallback((providerId: string, model: string) => {
     setProviderModels((prev) => ({ ...prev, [providerId]: model }))
-  }, [])
+    if (providerId === selectedProvider) {
+      saveAISettings({ model })
+    }
+  }, [selectedProvider])
 
   const handleTestKey = useCallback(async (provider: string) => {
     setTestStatuses((prev) => ({ ...prev, [provider]: 'testing' }))
@@ -61,12 +85,9 @@ export function AISettingsPage() {
   }, [])
 
   const handleAddKeySave = useCallback(async (providerId: string, apiKey: string, testPassed: boolean) => {
-    const result = await saveApiKey(providerId, apiKey)
+    const result = await saveApiKey(providerId, apiKey, testPassed)
     if (result?.success) {
       await refreshProviderData()
-      if (testPassed) {
-        setTestStatuses((prev) => ({ ...prev, [providerId]: 'success' }))
-      }
     }
     setShowAddKeyDialog(false)
   }, [refreshProviderData])
@@ -98,7 +119,7 @@ export function AISettingsPage() {
             </div>
             <ConnectivityCard
               selectedProvider={selectedProvider}
-              onSelectProvider={setSelectedProvider}
+              onSelectProvider={handleSelectProvider}
               savedProviders={apiKeyEntries.map((e) => e.provider)}
               testStatuses={testStatuses}
             />
