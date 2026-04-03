@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import { fillingProjects } from '@/lib/api'
+import { useResume } from '@/context/resume-context'
 import type { OpenSourceProject } from '@/types/analyze'
 
 interface FillingDialogProps {
@@ -29,6 +30,7 @@ export function FillingDialog({
   provider,
   model,
 }: FillingDialogProps) {
+  const { state, dispatch } = useResume()
   const [projects, setProjects] = useState<OpenSourceProject[]>([])
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [isLoading, setIsLoading] = useState(false)
@@ -56,6 +58,41 @@ export function FillingDialog({
       else next.add(index)
       return next
     })
+  }
+
+  function addToResume() {
+    const projectsSection = state.sections.find((s) => s.type === 'projects')
+    const sectionId = projectsSection?.id ?? crypto.randomUUID()
+
+    if (!projectsSection) {
+      dispatch({
+        type: 'ADD_SECTION',
+        payload: { sectionType: 'projects', id: sectionId },
+      })
+    }
+
+    const newEntries = [...selected].map((index) => {
+      const project = projects[index]
+      return {
+        id: crypto.randomUUID(),
+        name: project.name,
+        description: project.description,
+        url: project.url,
+      }
+    })
+
+    const existingEntries =
+      projectsSection?.type === 'projects' ? projectsSection.entries : []
+
+    dispatch({
+      type: 'UPDATE_SECTION',
+      payload: {
+        sectionId,
+        data: { entries: [...existingEntries, ...newEntries] },
+      },
+    })
+
+    onOpenChange(false)
   }
 
   return (
@@ -138,7 +175,7 @@ export function FillingDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          <Button disabled={selected.size === 0}>
+          <Button disabled={selected.size === 0} onClick={addToResume}>
             <Plus className="size-4" />
             Add to Resume
           </Button>
