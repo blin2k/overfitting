@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import type { AnalyzeRequest, AnalyzeResponse, MatchLevel, HighlightRequest } from '@shared/types/analyze'
+import type { AnalyzeRequest, AnalyzeResponse, MatchLevel, HighlightRequest, FillingRequest, OpenSourceProject } from '@shared/types/analyze'
 import { apiKeys, modelIdMap } from '../provider-store.js'
 
 const router = Router()
@@ -218,6 +218,88 @@ router.post('/highlight', async (req, res) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     res.status(500).json({ error: `Highlight extraction failed: ${message}` })
+  }
+})
+
+function buildFillingPrompt(jobDescription: string): string {
+  return `You are a career advisor. Based on the following job description, recommend 4-6 real, well-known open-source projects on GitHub that a candidate could contribute to in order to strengthen their resume for this role.
+
+Return ONLY a valid JSON object with this exact structure (no markdown, no extra text):
+{
+  "projects": [
+    {
+      "name": "project-name",
+      "url": "https://github.com/owner/repo",
+      "description": "One sentence describing the project and why it's relevant.",
+      "keywords": ["Tag1", "Tag2", "Tag3"],
+      "activity": "~N weeks"
+    }
+  ]
+}
+
+Rules:
+- Only recommend REAL open-source projects that actually exist on GitHub
+- The "url" must be a real GitHub repository URL (https://github.com/owner/repo)
+- The "keywords" should be 2-4 short tech/domain tags relevant to both the project and the job
+- The "activity" should be your best estimate of recent commit frequency (e.g. "~1 week", "~2 weeks", "~1 month")
+- Choose projects where contributing would demonstrate skills relevant to the job description
+- Prefer projects that are actively maintained and welcoming to contributors
+
+JOB DESCRIPTION:
+${jobDescription}`
+}
+
+router.post('/filling', async (req, res) => {
+  const { jobDescription, provider, model } = req.body as FillingRequest
+
+  if (!jobDescription || !provider || !model) {
+    res.status(400).json({ error: 'jobDescription, provider, and model are required' })
+    return
+  }
+
+  const stored = apiKeys.get(provider)
+  if (!stored) {
+    res.status(400).json({ error: `No API key configured for provider: ${provider}` })
+    return
+  }
+
+  const modelId = modelIdMap[model] ?? model
+  const prompt = buildFillingPrompt(jobDescription)
+
+  try {
+    let responseText: string
+
+    if (provider === 'anthropic') {
+      responseText = await callAnthropic(stored.key, modelId, prompt)
+    } else if (provider === 'openai') {
+      responseText = await callOpenAI(stored.key, modelId, prompt)
+    } else if (provider === 'gemini') {
+      responseText = await callGemini(stored.key, modelId, prompt)
+    } else if (provider === 'kimi') {
+      responseText = await callOpenAI(stored.key, modelId, prompt, 'https://api.moonshot.cn')
+    } else {
+      res.status(400).json({ error: `Unsupported provider: ${provider}` })
+      return
+    }
+
+    const cleaned = responseText.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim()
+    const parsed = JSON.parse(cleaned)
+    const projects: OpenSourceProject[] = Array.isArray(parsed.projects)
+      ? parsed.projects
+          .filter((p: any) => p.name && p.url && p.description)
+          .map((p: any) => ({
+            name: p.name,
+            url: p.url,
+            description: p.description,
+            keywords: Array.isArray(p.keywords) ? p.keywords : [],
+            activity: p.activity || 'unknown',
+          }))
+      : []
+
+    res.json({ projects })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    res.status(500).json({ error: `Filling projects failed: ${message}` })
   }
 })
 
