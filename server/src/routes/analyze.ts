@@ -232,7 +232,7 @@ Return ONLY a valid JSON object with this exact structure (no markdown, no extra
       "url": "https://github.com/owner/repo",
       "description": "One sentence describing the project and why it's relevant.",
       "keywords": ["Tag1", "Tag2", "Tag3"],
-      "activity": "~N weeks"
+      "rampUpTime": "~N hours"
     }
   ]
 }
@@ -241,7 +241,7 @@ Rules:
 - Only recommend REAL open-source projects that actually exist on GitHub
 - The "url" must be a real GitHub repository URL (https://github.com/owner/repo)
 - The "keywords" should be 2-4 short tech/domain tags relevant to both the project and the job
-- The "activity" should be your best estimate of recent commit frequency (e.g. "~1 week", "~2 weeks", "~1 month")
+- The "rampUpTime" should be your best estimate of how many hours it would take a new contributor to understand the whole project (e.g. "~10 hours", "~40 hours", "~100 hours")
 - Choose projects where contributing would demonstrate skills relevant to the job description
 - Prefer projects that are actively maintained and welcoming to contributors
 
@@ -292,7 +292,7 @@ router.post('/filling', async (req, res) => {
             url: p.url,
             description: p.description,
             keywords: Array.isArray(p.keywords) ? p.keywords : [],
-            activity: p.activity || 'unknown',
+            rampUpTime: p.rampUpTime || 'unknown',
           }))
       : []
 

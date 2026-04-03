@@ -102,7 +102,7 @@ export function FillingDialog({
                     <ExternalLink className="h-3 w-3 text-muted-foreground" />
                   </a>
                   <span className="rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-foreground">
-                    {project.activity}
+                    {project.rampUpTime}
                   </span>
                 </div>
                 <p className="text-[13px] leading-relaxed text-muted-foreground">

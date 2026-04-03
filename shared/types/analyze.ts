@@ -44,7 +44,7 @@ export interface OpenSourceProject {
   url: string
   description: string
   keywords: string[]
-  activity: string
+  rampUpTime: string
 }
 
 export interface FillingResponse {
