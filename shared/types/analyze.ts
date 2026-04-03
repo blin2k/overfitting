@@ -32,3 +32,21 @@ export interface HighlightRequest {
 export interface HighlightResponse {
   keywords: string[]
 }
+
+export interface FillingRequest {
+  jobDescription: string
+  provider: string
+  model: string
+}
+
+export interface OpenSourceProject {
+  name: string
+  url: string
+  description: string
+  keywords: string[]
+  rampUpTime: string
+}
+
+export interface FillingResponse {
+  projects: OpenSourceProject[]
+}

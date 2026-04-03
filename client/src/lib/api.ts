@@ -1,5 +1,5 @@
 import type { ResumeData } from '@/types/resume'
-import type { AnalyzeRequest, AnalyzeResponse, HighlightRequest, HighlightResponse } from '@/types/analyze'
+import type { AnalyzeRequest, AnalyzeResponse, HighlightRequest, HighlightResponse, FillingRequest, FillingResponse } from '@/types/analyze'
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
@@ -157,6 +157,22 @@ export async function saveAISettings(settings: Partial<AISettings>): Promise<AIS
     return await res.json()
   } catch {
     return { provider: 'anthropic', model: 'Claude Opus 4' }
+  }
+}
+
+export async function fillingProjects(
+  request: FillingRequest
+): Promise<FillingResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/filling`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
+    })
+    if (!res.ok) return null
+    return await res.json()
+  } catch {
+    return null
   }
 }
 

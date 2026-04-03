@@ -15,6 +15,7 @@ import { Separator } from '@/components/ui/separator'
 import { useResume } from '@/context/resume-context'
 import { analyzeResume, highlightResume, fetchAISettings, type AISettings } from '@/lib/api'
 import type { AnalyzeResponse } from '@/types/analyze'
+import { FillingDialog } from '@/components/filling-dialog'
 
 const ACTION_CONFIG = [
   { type: 'rating' as const, icon: Star, label: 'Rating', color: 'text-[#EAB308]' },
@@ -73,6 +74,7 @@ export function AIAssistantPanel({ onHighlight }: AIAssistantPanelProps) {
   const [error, setError] = useState<string | null>(null)
   const [aiSettings, setAiSettings] = useState<AISettings | null>(null)
   const [isHighlighting, setIsHighlighting] = useState(false)
+  const [isFillingOpen, setIsFillingOpen] = useState(false)
 
   useEffect(() => {
     fetchAISettings().then(setAiSettings)
@@ -146,6 +148,7 @@ export function AIAssistantPanel({ onHighlight }: AIAssistantPanelProps) {
               const handler =
                 action.type === 'rating' ? runAnalysis
                 : action.type === 'highlighting' ? runHighlight
+                : action.type === 'filling' ? () => setIsFillingOpen(true)
                 : undefined
               const busyLabel =
                 action.type === 'rating' ? 'Re-rating...'
@@ -207,6 +210,13 @@ export function AIAssistantPanel({ onHighlight }: AIAssistantPanelProps) {
           </p>
         </div>
       )}
+      <FillingDialog
+        open={isFillingOpen}
+        onOpenChange={setIsFillingOpen}
+        jobDescription={jobDescription}
+        provider={aiSettings?.provider ?? ''}
+        model={aiSettings?.model ?? ''}
+      />
     </div>
   )
 }

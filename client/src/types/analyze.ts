@@ -5,4 +5,7 @@ export type {
   MatchLevel,
   HighlightRequest,
   HighlightResponse,
+  FillingRequest,
+  FillingResponse,
+  OpenSourceProject,
 } from '@shared/types/analyze'
