@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Plus, Loader2, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,86 +11,49 @@ import {
   DialogClose,
 } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-
-interface OpenSourceProject {
-  name: string
-  description: string
-  keywords: string[]
-  activity: string
-}
-
-const PLACEHOLDER_PROJECTS: OpenSourceProject[] = [
-  {
-    name: 'react-pdf',
-    description:
-      'Display PDFs in your React app as easily as images. Supports custom rendering, annotations, and more.',
-    keywords: ['React', 'PDF', 'TypeScript'],
-    activity: '~3 weeks',
-  },
-  {
-    name: 'docusaurus',
-    description:
-      'Easy to maintain open-source documentation websites. Built with React and supports MDX, versioning, and i18n.',
-    keywords: ['React', 'MDX', 'TypeScript'],
-    activity: '~1 week',
-  },
-  {
-    name: 'langchain',
-    description:
-      'A framework for building LLM-powered applications with composable components and tool integrations.',
-    keywords: ['LLM', 'Python', 'AI Agents'],
-    activity: '~2 weeks',
-  },
-  {
-    name: 'fastapi',
-    description:
-      'Modern, fast web framework for building APIs with Python based on standard type hints.',
-    keywords: ['REST API', 'Python', 'Backend'],
-    activity: '~1 week',
-  },
-  {
-    name: 'langchain',
-    description:
-      'A framework for building LLM-powered applications with composable components and tool integrations.',
-    keywords: ['LLM', 'Python', 'AI Agents'],
-    activity: '~2 weeks',
-  },
-  {
-    name: 'fastapi',
-    description:
-      'Modern, fast web framework for building APIs with Python based on standard type hints.',
-    keywords: ['REST API', 'Python', 'Backend'],
-    activity: '~1 week',
-  },
-  {
-    name: 'langchain',
-    description:
-      'A framework for building LLM-powered applications with composable components and tool integrations.',
-    keywords: ['LLM', 'Python', 'AI Agents'],
-    activity: '~2 weeks',
-  },
-  {
-    name: 'fastapi',
-    description:
-      'Modern, fast web framework for building APIs with Python based on standard type hints.',
-    keywords: ['REST API', 'Python', 'Backend'],
-    activity: '~1 week',
-  },
-]
+import { fillingProjects } from '@/lib/api'
+import type { OpenSourceProject } from '@/types/analyze'
 
 interface FillingDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  jobDescription: string
+  provider: string
+  model: string
 }
 
-export function FillingDialog({ open, onOpenChange }: FillingDialogProps) {
-  const [selected, setSelected] = useState<Set<string>>(new Set())
+export function FillingDialog({
+  open,
+  onOpenChange,
+  jobDescription,
+  provider,
+  model,
+}: FillingDialogProps) {
+  const [projects, setProjects] = useState<OpenSourceProject[]>([])
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  function toggleProject(name: string) {
+  useEffect(() => {
+    if (!open || !jobDescription || !provider || !model) return
+    setIsLoading(true)
+    setError(null)
+    setSelected(new Set())
+    fillingProjects({ jobDescription, provider, model }).then((res) => {
+      if (res) {
+        setProjects(res.projects)
+      } else {
+        setError('Failed to fetch projects. Check your AI provider settings.')
+      }
+      setIsLoading(false)
+    })
+  }, [open, jobDescription, provider, model])
+
+  function toggleProject(index: number) {
     setSelected((prev) => {
       const next = new Set(prev)
-      if (next.has(name)) next.delete(name)
-      else next.add(name)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
       return next
     })
   }
@@ -110,45 +73,66 @@ export function FillingDialog({ open, onOpenChange }: FillingDialogProps) {
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto px-6">
-          {PLACEHOLDER_PROJECTS.map((project) => (
-            <div
-              key={project.name}
-              className="flex flex-col gap-2.5 border-b border-border py-4 last:border-b-0"
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-bold text-foreground">
-                  {project.name}
-                </span>
-                <span className="rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-foreground">
-                  {project.activity}
-                </span>
-              </div>
-              <p className="text-[13px] leading-relaxed text-muted-foreground">
-                {project.description}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center gap-3 py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Finding matching projects...
               </p>
-              <div className="flex items-center justify-between">
-                <div className="flex gap-1.5">
-                  {project.keywords.map((kw) => (
-                    <span
-                      key={kw}
-                      className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground"
-                    >
-                      {kw}
-                    </span>
-                  ))}
-                </div>
-                <Checkbox
-                  checked={selected.has(project.name)}
-                  onCheckedChange={() => toggleProject(project.name)}
-                />
-              </div>
             </div>
-          ))}
+          )}
+          {error && (
+            <p className="py-8 text-center text-sm text-destructive">{error}</p>
+          )}
+          {!isLoading &&
+            !error &&
+            projects.map((project, index) => (
+              <div
+                key={index}
+                className="flex flex-col gap-2.5 border-b border-border py-4 last:border-b-0"
+              >
+                <div className="flex items-center justify-between">
+                  <a
+                    href={project.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-sm font-bold text-foreground hover:underline"
+                  >
+                    {project.name}
+                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                  </a>
+                  <span className="rounded-full border border-border px-2 py-0.5 text-xs font-semibold text-foreground">
+                    {project.activity}
+                  </span>
+                </div>
+                <p className="text-[13px] leading-relaxed text-muted-foreground">
+                  {project.description}
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-1.5">
+                    {project.keywords.map((kw) => (
+                      <span
+                        key={kw}
+                        className="rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground"
+                      >
+                        {kw}
+                      </span>
+                    ))}
+                  </div>
+                  <Checkbox
+                    checked={selected.has(index)}
+                    onCheckedChange={() => toggleProject(index)}
+                  />
+                </div>
+              </div>
+            ))}
         </div>
 
         <DialogFooter>
           <span className="text-[13px] text-muted-foreground">
-            {selected.size} of {PLACEHOLDER_PROJECTS.length} projects selected
+            {isLoading
+              ? 'Loading...'
+              : `${selected.size} of ${projects.length} projects selected`}
           </span>
           <div className="flex-1" />
           <Button variant="outline" onClick={() => onOpenChange(false)}>

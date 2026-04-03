@@ -210,7 +210,13 @@ export function AIAssistantPanel({ onHighlight }: AIAssistantPanelProps) {
           </p>
         </div>
       )}
-      <FillingDialog open={isFillingOpen} onOpenChange={setIsFillingOpen} />
+      <FillingDialog
+        open={isFillingOpen}
+        onOpenChange={setIsFillingOpen}
+        jobDescription={jobDescription}
+        provider={aiSettings?.provider ?? ''}
+        model={aiSettings?.model ?? ''}
+      />
     </div>
   )
 }
